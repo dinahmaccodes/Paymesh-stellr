@@ -7,3 +7,9 @@ pub struct AutoShareDetails {
     pub name: String,
     pub creator: Address,
 }
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct GroupMember {
+    pub address: Address,
+}

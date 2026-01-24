@@ -1,9 +1,10 @@
 {
   "generators": {
-    "address": 2,
+    "address": 3,
     "nonce": 0
   },
   "auth": [
+    [],
     [],
     [],
     []
@@ -119,7 +120,7 @@
                         "symbol": "name"
                       },
                       "val": {
-                        "string": "Test"
+                        "string": "Test Group"
                       }
                     }
                   ]
@@ -167,7 +168,20 @@
                 },
                 "durability": "persistent",
                 "val": {
-                  "vec": []
+                  "vec": [
+                    {
+                      "map": [
+                        {
+                          "key": {
+                            "symbol": "address"
+                          },
+                          "val": {
+                            "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
+                          }
+                        }
+                      ]
+                    }
+                  ]
                 }
               }
             },
