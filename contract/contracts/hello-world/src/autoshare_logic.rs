@@ -1,12 +1,95 @@
 use crate::base::errors::Error;
-use crate::base::events::{emit_autoshare_created, emit_autoshare_updated};
+use crate::base::events::{
+    emit_autoshare_created, emit_autoshare_updated, emit_contract_paused, emit_contract_unpaused,
+};
 use crate::base::types::{AutoShareDetails, GroupMember};
 use soroban_sdk::{contracttype, Address, BytesN, Env, String, Vec};
 
 #[contracttype]
 pub enum DataKey {
     AutoShare(BytesN<32>),
+    GroupMembers(BytesN<32>),
     AllGroups,
+    Admin,
+    IsPaused,
+}
+
+pub fn set_admin(env: Env, admin: Address) -> Result<(), Error> {
+    if env.storage().persistent().has(&DataKey::Admin) {
+        return Err(Error::AlreadyExists);
+    }
+    env.storage().persistent().set(&DataKey::Admin, &admin);
+    Ok(())
+}
+
+pub fn pause(env: Env, admin: Address) -> Result<(), Error> {
+    admin.require_auth();
+
+    let stored_admin: Address = env
+        .storage()
+        .persistent()
+        .get(&DataKey::Admin)
+        .ok_or(Error::NotAuthorized)?;
+
+    if admin != stored_admin {
+        return Err(Error::NotAuthorized);
+    }
+
+    let is_paused: bool = env
+        .storage()
+        .persistent()
+        .get(&DataKey::IsPaused)
+        .unwrap_or(false);
+
+    if is_paused {
+        return Err(Error::AlreadyPaused);
+    }
+
+    env.storage().persistent().set(&DataKey::IsPaused, &true);
+    emit_contract_paused(&env);
+    Ok(())
+}
+
+pub fn unpause(env: Env, admin: Address) -> Result<(), Error> {
+    admin.require_auth();
+
+    let stored_admin: Address = env
+        .storage()
+        .persistent()
+        .get(&DataKey::Admin)
+        .ok_or(Error::NotAuthorized)?;
+
+    if admin != stored_admin {
+        return Err(Error::NotAuthorized);
+    }
+
+    let is_paused: bool = env
+        .storage()
+        .persistent()
+        .get(&DataKey::IsPaused)
+        .unwrap_or(false);
+
+    if !is_paused {
+        return Err(Error::NotPaused);
+    }
+
+    env.storage().persistent().set(&DataKey::IsPaused, &false);
+    emit_contract_unpaused(&env);
+    Ok(())
+}
+
+pub fn get_paused_status(env: &Env) -> bool {
+    env.storage()
+        .persistent()
+        .get(&DataKey::IsPaused)
+        .unwrap_or(false)
+}
+
+fn require_not_paused(env: &Env) -> Result<(), Error> {
+    if get_paused_status(env) {
+        return Err(Error::ContractPaused);
+    }
+    Ok(())
 }
 
 // Helper to validate members
@@ -44,6 +127,8 @@ pub fn create_autoshare(
     creator: Address,
     members: Vec<GroupMember>,
 ) -> Result<(), Error> {
+    require_not_paused(&env)?;
+
     let key = DataKey::AutoShare(id.clone());
 
     // Check if it already exists to prevent overwriting
@@ -152,4 +237,57 @@ pub fn is_group_member(env: Env, id: BytesN<32>, address: Address) -> Result<boo
         }
     }
     Ok(false)
+}
+
+pub fn get_group_members(env: Env, id: BytesN<32>) -> Result<Vec<GroupMember>, Error> {
+    // First check if the group exists
+    let group_key = DataKey::AutoShare(id.clone());
+    if !env.storage().persistent().has(&group_key) {
+        return Err(Error::NotFound);
+    }
+
+    let members_key = DataKey::GroupMembers(id);
+    let members: Vec<GroupMember> = env
+        .storage()
+        .persistent()
+        .get(&members_key)
+        .unwrap_or(Vec::new(&env));
+
+    Ok(members)
+}
+
+pub fn add_group_member(
+    env: Env,
+    id: BytesN<32>,
+    address: Address,
+    percentage: u32,
+) -> Result<(), Error> {
+    require_not_paused(&env)?;
+
+    // First check if the group exists
+    let group_key = DataKey::AutoShare(id.clone());
+    if !env.storage().persistent().has(&group_key) {
+        return Err(Error::NotFound);
+    }
+
+    let members_key = DataKey::GroupMembers(id);
+    let mut members: Vec<GroupMember> = env
+        .storage()
+        .persistent()
+        .get(&members_key)
+        .unwrap_or(Vec::new(&env));
+
+    // Check if already a member
+    for member in members.iter() {
+        if member.address == address {
+            return Err(Error::AlreadyExists);
+        }
+    }
+
+    members.push_back(GroupMember {
+        address,
+        percentage,
+    });
+    env.storage().persistent().set(&members_key, &members);
+    Ok(())
 }

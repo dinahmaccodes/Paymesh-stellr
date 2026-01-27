@@ -15,11 +15,33 @@ pub mod interfaces {
 // 2. Declare the main logic file where the functions are implemented
 mod autoshare_logic;
 
+pub mod mock_token;
+
 #[contract]
 pub struct AutoShareContract;
 
 #[contractimpl]
 impl AutoShareContract {
+    /// Initializes the contract with an admin address.
+    pub fn initialize(env: Env, admin: Address) {
+        autoshare_logic::set_admin(env, admin).unwrap();
+    }
+
+    /// Pauses the contract. Only admin can call.
+    pub fn pause(env: Env, admin: Address) {
+        autoshare_logic::pause(env, admin).unwrap();
+    }
+
+    /// Unpauses the contract. Only admin can call.
+    pub fn unpause(env: Env, admin: Address) {
+        autoshare_logic::unpause(env, admin).unwrap();
+    }
+
+    /// Returns the current pause status.
+    pub fn get_paused_status(env: Env) -> bool {
+        autoshare_logic::get_paused_status(&env)
+    }
+
     /// Creates a new AutoShare plan.
     /// Requirement: create_autoshare should store data and emit an event.
     pub fn create(
@@ -63,6 +85,15 @@ impl AutoShareContract {
     pub fn is_group_member(env: Env, id: BytesN<32>, address: Address) -> bool {
         autoshare_logic::is_group_member(env, id, address).unwrap()
     }
+
+    pub fn get_group_members(env: Env, id: BytesN<32>) -> Vec<base::types::GroupMember> {
+        autoshare_logic::get_group_members(env, id).unwrap()
+    }
+
+    /// Adds a member to a group with specified percentage.
+    pub fn add_group_member(env: Env, id: BytesN<32>, address: Address, percentage: u32) {
+        autoshare_logic::add_group_member(env, id, address, percentage).unwrap();
+    }
 }
 
 // 3. Link the tests (Requirement: Unit Tests)
@@ -70,7 +101,9 @@ impl AutoShareContract {
 #[path = "tests/autoshare_test.rs"]
 mod autoshare_test; // Links the internal tests/autoshare_test.rs inside src
 
-pub mod mock_token;
+#[cfg(test)]
+#[path = "tests/pause_test.rs"]
+mod pause_test;
 
 #[cfg(test)]
 #[path = "tests/mock_token_test.rs"]
