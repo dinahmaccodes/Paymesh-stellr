@@ -39,6 +39,14 @@ export function Navbar() {
               >
                 Settings
               </a>
+
+              {/* Waitlist link */}
+              <a
+                href="/waitlist"
+                className="text-white bg-[#5B63D6] px-3 py-2 rounded-md text-sm font-medium"
+              >
+                Join Waitlist
+              </a>
             </div>
           </div>
 
@@ -81,6 +89,15 @@ export function Navbar() {
             >
               Settings
             </a>
+
+            {/* Mobile Waitlist link */}
+            <a
+              href="/waitlist"
+              className="text-white block bg-[#5B63D6] px-3 py-2 rounded-md text-base font-medium"
+            >
+              Join Waitlist
+            </a>
+
             <div className="mt-4 px-3">
               <ConnectWalletButton />
             </div>
