@@ -62,10 +62,15 @@ export default function WaitlistHeroSection({ onEmailSubmit }: Props) {
         ))}
       </div>
       <nav
-        className={`${navCls} justify-between bg-[rgba(5,7,11,0.1)] ${btnCls}`}
+        className={`${navCls} justify-center bg-[rgba(5,7,11,0.1)] ${btnCls}`}
       >
-        <div className="flex items-center gap-1">
-          <Image src="/waitlist-icon.svg" alt="" width={35} height={21} />
+        <div className="flex items-center gap-1 mx-auto">
+          <Image
+            src="/waitlist-icon.svg"
+            alt="Paymesh logo"
+            width={35}
+            height={21}
+          />
           <span className="text-white font-bold text-lg">Paymesh</span>
         </div>
       </nav>
