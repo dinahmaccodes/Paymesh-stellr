@@ -102,8 +102,15 @@ impl AutoShareContract {
     }
 
     /// Adds a member to a group with specified percentage.
-    pub fn add_group_member(env: Env, id: BytesN<32>, address: Address, percentage: u32) {
-        autoshare_logic::add_group_member(env, id, address, percentage).unwrap();
+    /// Only the group creator (caller) may add members.
+    pub fn add_group_member(
+        env: Env,
+        id: BytesN<32>,
+        caller: Address,
+        address: Address,
+        percentage: u32,
+    ) {
+        autoshare_logic::add_group_member(env, id, caller, address, percentage).unwrap();
     }
 
     /// Removes a single member from a group. Only the creator can call; group must be active.

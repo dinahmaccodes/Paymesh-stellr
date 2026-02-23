@@ -168,10 +168,13 @@ pub fn get_group_members(env: Env, id: BytesN<32>) -> Result<Vec<GroupMember>, E
 pub fn add_group_member(
     env: Env,
     id: BytesN<32>,
+    caller: Address,
     address: Address,
     percentage: u32,
 ) -> Result<(), Error> {
-    // Check if contract is paused
+    // Require caller auth and check pause
+    caller.require_auth();
+
     if get_paused_status(&env) {
         return Err(Error::ContractPaused);
     }
@@ -183,6 +186,15 @@ pub fn add_group_member(
         .get(&key)
         .ok_or(Error::NotFound)?;
 
+    // Only the group creator can add members
+    if details.creator != caller {
+        return Err(Error::Unauthorized);
+    }
+
+    if !details.is_active {
+        return Err(Error::GroupInactive);
+    }
+
     // Check if already a member
     for member in details.members.iter() {
         if member.address == address {
@@ -192,7 +204,7 @@ pub fn add_group_member(
 
     // Add new member
     details.members.push_back(GroupMember {
-        address,
+        address: address.clone(),
         percentage,
     });
 
@@ -201,6 +213,20 @@ pub fn add_group_member(
 
     // Save updated details
     env.storage().persistent().set(&key, &details);
+
+    // Also update the GroupMembers storage to keep both places in sync
+    let members_key = DataKey::GroupMembers(id.clone());
+    let mut members: Vec<GroupMember> = env
+        .storage()
+        .persistent()
+        .get(&members_key)
+        .unwrap_or(Vec::new(&env));
+    members.push_back(GroupMember {
+        address: address.clone(),
+        percentage,
+    });
+    env.storage().persistent().set(&members_key, &members);
+
     Ok(())
 }
 
