@@ -77,3 +77,11 @@ pub struct Distribution {
     pub sender: Address,
     pub amount: i128,
 }
+
+#[contractevent(data_format = "single-value")]
+#[derive(Clone)]
+pub struct GroupNameUpdated {
+    #[topic]
+    pub updater: Address,
+    pub id: BytesN<32>,
+}

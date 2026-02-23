@@ -88,6 +88,9 @@ pub trait AutoShareTrait {
     /// Activates a group. Only the creator can activate.
     fn activate_group(env: Env, id: BytesN<32>, caller: Address);
 
+    /// Updates the name of a group. Only the creator can update.
+    fn update_group_name(env: Env, id: BytesN<32>, caller: Address, new_name: String);
+
     /// Returns whether a group is active.
     fn is_group_active(env: Env, id: BytesN<32>) -> bool;
 

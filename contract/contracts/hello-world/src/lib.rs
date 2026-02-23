@@ -129,6 +129,11 @@ impl AutoShareContract {
         autoshare_logic::activate_group(env, id, caller).unwrap();
     }
 
+    /// Updates the name of a group. Only the creator can update.
+    pub fn update_group_name(env: Env, id: BytesN<32>, caller: Address, new_name: String) {
+        autoshare_logic::update_group_name(env, id, caller, new_name).unwrap();
+    }
+
     /// Returns whether a group is active.
     pub fn is_group_active(env: Env, id: BytesN<32>) -> bool {
         autoshare_logic::is_group_active(env, id).unwrap()

@@ -1,7 +1,7 @@
 use crate::base::errors::Error;
 use crate::base::events::{
     AdminTransferred, AutoshareCreated, AutoshareUpdated, ContractPaused, ContractUnpaused,
-    Distribution, GroupActivated, GroupDeactivated, GroupDeleted, Withdrawal,
+    Distribution, GroupActivated, GroupDeactivated, GroupDeleted, GroupNameUpdated, Withdrawal,
 };
 use crate::base::types::{
     AutoShareDetails, DistributionHistory, GroupMember, MemberAmount, PaymentHistory,
@@ -936,6 +936,48 @@ pub fn activate_group(env: Env, id: BytesN<32>, caller: Address) -> Result<(), E
     GroupActivated {
         id: id.clone(),
         creator: caller,
+    }
+    .publish(&env);
+    Ok(())
+}
+
+pub fn update_group_name(
+    env: Env,
+    id: BytesN<32>,
+    caller: Address,
+    new_name: String,
+) -> Result<(), Error> {
+    caller.require_auth();
+
+    if get_paused_status(&env) {
+        return Err(Error::ContractPaused);
+    }
+
+    let key = DataKey::AutoShare(id.clone());
+    let mut details: AutoShareDetails = env
+        .storage()
+        .persistent()
+        .get(&key)
+        .ok_or(Error::NotFound)?;
+
+    if details.creator != caller {
+        return Err(Error::Unauthorized);
+    }
+
+    if !details.is_active {
+        return Err(Error::GroupInactive);
+    }
+
+    if new_name.is_empty() {
+        return Err(Error::EmptyName);
+    }
+
+    details.name = new_name;
+    env.storage().persistent().set(&key, &details);
+
+    GroupNameUpdated {
+        id: id.clone(),
+        updater: caller,
     }
     .publish(&env);
     Ok(())
