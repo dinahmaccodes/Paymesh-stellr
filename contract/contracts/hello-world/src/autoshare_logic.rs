@@ -1,7 +1,7 @@
 use crate::base::errors::Error;
 use crate::base::events::{
     AdminTransferred, AutoshareCreated, AutoshareUpdated, ContractPaused, ContractUnpaused,
-    Distribution, GroupActivated, GroupDeactivated, Withdrawal,
+    Distribution, GroupActivated, GroupDeactivated, GroupDeleted, Withdrawal,
 };
 use crate::base::types::{AutoShareDetails, GroupMember, PaymentHistory};
 use soroban_sdk::{contracttype, token, Address, BytesN, Env, String, Vec};
@@ -622,6 +622,8 @@ pub fn get_total_usages_paid(env: Env, id: BytesN<32>) -> Result<u32, Error> {
     Ok(details.total_usages_paid)
 }
 
+#[cfg(test)]
+#[allow(dead_code)]
 pub fn reduce_usage(env: Env, id: BytesN<32>) -> Result<(), Error> {
     let key = DataKey::AutoShare(id);
     let mut details: AutoShareDetails = env
@@ -834,7 +836,7 @@ pub fn delete_group(env: Env, id: BytesN<32>, caller: Address) -> Result<(), Err
     if details.usage_count > 0 {
         // Option 1: Strict enforcement - uncomment to require zero usages
         // return Err(Error::GroupHasRemainingUsages);
-        
+
         // Option 2: Allow deletion with forfeiture (current implementation)
         // The remaining usages are simply forfeited
     }
